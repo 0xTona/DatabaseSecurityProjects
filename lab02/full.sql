@@ -503,28 +503,28 @@ GRANT SELECT ON vCau2 TO BDU04;
 GRANT SELECT ON vCau3 TO BDU04;
 GRANT SELECT ON vCau4 TO BDU04;
 
---============================================================================
--- TEST: granted privileges
---============================================================================
--- 1. BDRead
-SELECT * FROM vCau1
-SELECT * FROM vCau5
-
--- 2. BDU01
-SELECT * FROM vCau2
-SELECT * FROM vCau10
-
--- 3. BDU03
-SELECT * FROM vCau1
-SELECT * FROM vCau2
-SELECT * FROM vCau3
-SELECT * FROM vCau4
-
--- 4. BDU04
-SELECT * FROM vCau1
-SELECT * FROM vCau2
-SELECT * FROM vCau3
-SELECT * FROM vCau4
+----============================================================================
+---- TEST: granted privileges
+----============================================================================
+---- 1. BDRead
+--SELECT * FROM vCau1
+--SELECT * FROM vCau5
+--
+---- 2. BDU01
+--SELECT * FROM vCau2
+--SELECT * FROM vCau10
+--
+---- 3. BDU03
+--SELECT * FROM vCau1
+--SELECT * FROM vCau2
+--SELECT * FROM vCau3
+--SELECT * FROM vCau4
+--
+---- 4. BDU04
+--SELECT * FROM vCau1
+--SELECT * FROM vCau2
+--SELECT * FROM vCau3
+--SELECT * FROM vCau4
 
 
 
