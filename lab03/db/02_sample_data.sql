@@ -10,9 +10,9 @@ DELETE FROM HOCPHAN;
 GO
 
 -- ─── Nhân viên (Giảng viên) ───────────────────────────────
-EXEC SP_INS_PUBLIC_NHANVIEN 'NV01', N'Nguyễn Văn An',   'nva@edu.vn',  8000000, 'nva', 'abcd12';
-EXEC SP_INS_PUBLIC_NHANVIEN 'NV02', N'Trần Thị Bình',   'ttb@edu.vn',  9000000, 'ttb', 'abcd12';
-EXEC SP_INS_PUBLIC_NHANVIEN 'NV03', N'Lê Hoàng Cường',  'lhc@edu.vn',  7500000, 'lhc', 'abcd12';
+EXEC SP_INS_PUBLIC_NHANVIEN 'NV01', N'Nguyễn Văn An',   'nva@edu.vn',  8000000, 'nva', 'Abcd123!';
+EXEC SP_INS_PUBLIC_NHANVIEN 'NV02', N'Trần Thị Bình',   'ttb@edu.vn',  9000000, 'ttb', 'Abcd123!';
+EXEC SP_INS_PUBLIC_NHANVIEN 'NV03', N'Lê Hoàng Cường',  'lhc@edu.vn',  7500000, 'lhc', 'Abcd123!';
 GO
 
 
@@ -85,7 +85,7 @@ EXEC SP_INS_BANGDIEM 'SV03', 'HP05', 9.5, 'NV01';
 EXEC SP_INS_BANGDIEM 'SV04', 'HP01', NULL, 'NV02';
 EXEC SP_INS_BANGDIEM 'SV04', 'HP02', 8.0, 'NV02';
 
-EXEC SP_INS_BANGDIEM 'SV0', 'HP03', 9.0, 'NV02';
+EXEC SP_INS_BANGDIEM 'SV05', 'HP03', 9.0, 'NV02';
 EXEC SP_INS_BANGDIEM 'SV05', 'HP04', 8.5, 'NV02';
 
 EXEC SP_INS_BANGDIEM 'SV06', 'HP05', 6.0, 'NV02';
