@@ -64,9 +64,19 @@ python main.py
    - Nhập Tên Đăng Nhập: `nva`
    - Mật khẩu: `abcd12`
    - Nhấn "ĐĂNG NHẬP" hoặc phím `Enter`.
-2. **Quản lý dữ liệu (Tabs Sinh Viên & Lớp Học):**
-   - Sau khi đăng nhập thành công, hệ thống sẽ mở màn hình quản lý.
-   - Bạn có thể chuyển đổi qua lại giữa tab **"Sinh Viên"** và **"Lớp Học"**.
+2. **Quản lý Lớp Học:**
+   - Sau khi đăng nhập thành công, hệ thống sẽ mở màn hình quản lý lớp học.
    - Nhấn vào một dòng để thông tin chi tiết tự động điền xuống form bên dưới.
-   - Sử dụng các nút **[Thêm]**, **[Sửa]**, **[Xóa]**, **[Làm mới]** để quản lý dữ liệu.
+   - Sử dụng các nút **[Thêm]**, **[Sửa]**, **[Xóa]**, **[Làm mới]** để quản lý dữ liệu lớp học.
    - Nhấn **[Đăng xuất]** ở góc phải phía trên để quay lại màn hình đăng nhập.
+3. **Quản lý Sinh viên (Điều hướng theo Lớp):**
+   - Sau khi đăng nhập, màn hình mặc định sẽ hiển thị danh sách các Lớp Học.
+   - Để xem danh sách sinh viên, bạn cần chọn một lớp trên bảng dữ liệu, sau đó nhấn nút **[Quản lý Sinh viên]**.
+   - Ứng dụng sẽ chuyển sang trang quản lý sinh viên của riêng lớp đó.
+   - Để quay lại trang Quản lý Lớp học, nhấn tab **[Quản lý Lớp học]**.
+   - Lưu ý bảo mật: Chỉ giảng viên chủ nhiệm của lớp mới có quyền sử dụng các nút **[Thêm]**, **[Sửa]**, **[Xóa]**, **[Quản lý Điểm]** đối với sinh viên trong lớp. Nếu không có quyền, các nút này sẽ bị khóa.
+4. **Quản lý Điểm (Mã hóa & Popup):**
+   - Tại trang Quản lý Sinh viên, hãy chọn một sinh viên trong bảng và nhấn nút **[Quản lý Điểm]**.
+   - Một cửa sổ (Popup) sẽ hiện ra, bạn có thể  điền mã học phần vào **[Mã HP]** và điểm vào **[Điểm thi]** và bấm **[Lưu Điểm]** mới hoặc cập nhật điểm cũ.
+   - Để  hiển thị điểm thi của sinh viên đã được chọn thì cần nhập mật khẩu và nhấn **[Xem Điểm]**. 
+   - Điểm số khi lưu sẽ tự động được hệ thống mã hóa bằng thuật toán RSA với Public key của giảng viên chủ nhiệm lớp trước khi lưu xuống cơ sở dữ liệu.
