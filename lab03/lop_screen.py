@@ -164,11 +164,13 @@ def open_lop_screen(root, on_logout_callback, nav_callbacks=None):
                 messagebox.showerror("Lỗi DB", str(e))
 
     def goto_sv():
-        malop = e_malop.get().strip()
-        if not malop:
-            return messagebox.showwarning("Thiếu thông tin", "Vui lòng chọn một lớp từ danh sách.")
-
-        if malop and nav_callbacks and 'sv' in nav_callbacks:
+        selected = tree_lop.selection()
+        if not selected:
+            messagebox.showwarning("Thiếu thông tin", "Vui lòng chọn một lớp từ danh sách.")
+            return
+            
+        malop = tree_lop.item(selected[0])['values'][0]
+        if nav_callbacks and 'sv' in nav_callbacks:
             root.after(10, lambda: nav_callbacks['sv'](malop))
 
 

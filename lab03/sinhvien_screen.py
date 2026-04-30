@@ -126,8 +126,10 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
 
     btn_dict = {}
     lop_managers = {}  # Cache cho việc kiểm tra quyền sở hữu lớp
+    is_manager = False
 
     def load_sv():
+        nonlocal is_manager
         if not current_malop: return
 
         # Cập nhật cache quản lý lớp
@@ -137,6 +139,8 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
                 lop_managers[row[0]] = row[2]  # MALOP -> MANV
         except:
             pass
+
+        is_manager = (str(lop_managers.get(current_malop, "")) == session.current_user["MANV"])
 
         for item in tree_sv.get_children():
             tree_sv.delete(item)
@@ -165,8 +169,7 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
             e_matkhau.delete(0, 'end')
 
             # UX Improvement: Disable Update/Delete/Score buttons if user is not the owner
-            manager_of_class = lop_managers.get(current_malop, "")
-            if str(manager_of_class) != session.current_user["MANV"]:
+            if not is_manager:
                 if "Sửa" in btn_dict: btn_dict["Sửa"].config(state="disabled", bg="#6b7280", cursor="arrow")
                 if "Xoá" in btn_dict: btn_dict["Xoá"].config(state="disabled", bg="#6b7280", cursor="arrow")
                 if "Quản lý Điểm" in btn_dict: btn_dict["Quản lý Điểm"].config(state="disabled", bg="#6b7280", cursor="arrow")
@@ -180,9 +183,10 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
         for e in [e_masv, e_hoten, e_ngaysinh, e_diachi, e_tendn, e_matkhau]:
             e.delete(0, 'end')
             
-        if "Sửa" in btn_dict: btn_dict["Sửa"].config(state="normal", bg="#f59e0b", cursor="hand2")
-        if "Xoá" in btn_dict: btn_dict["Xoá"].config(state="normal", bg="#ef4444", cursor="hand2")
-        if "Quản lý Điểm" in btn_dict: btn_dict["Quản lý Điểm"].config(state="normal", bg="#8b5cf6", cursor="hand2")
+        if is_manager:
+            if "Sửa" in btn_dict: btn_dict["Sửa"].config(state="normal", bg="#f59e0b", cursor="hand2")
+            if "Xoá" in btn_dict: btn_dict["Xoá"].config(state="normal", bg="#ef4444", cursor="hand2")
+            if "Quản lý Điểm" in btn_dict: btn_dict["Quản lý Điểm"].config(state="normal", bg="#8b5cf6", cursor="hand2")
         
         load_sv()
 
@@ -257,12 +261,13 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
                 messagebox.showerror("Loi DB", str(e))
 
     def open_score_popup():
-        e_masv.config(state="normal")
-        masv = e_masv.get().strip()
-        e_masv.config(state="disabled")
-        
-        if not masv:
-            return messagebox.showwarning("Thiếu thông tin", "Vui lòng chọn một sinh viên từ danh sách.")
+        selected = tree_sv.selection()
+        if not selected:
+            return messagebox.showwarning("Thiếu thông tin", "Vui lòng chọn một sinh viên từ danh sách để quản lý điểm.")
+            
+        row_values = tree_sv.item(selected[0])['values']
+        masv = row_values[0]
+        hoten = row_values[1]
             
         popup = tk.Toplevel(root)
         popup.title("Quản lý Điểm")
@@ -392,3 +397,8 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
 
     # Khởi tạo data
     load_sv()
+
+    if not is_manager:
+        for b in ["Thêm", "Sửa", "Xoá", "Quản lý Điểm"]:
+            if b in btn_dict:
+                btn_dict[b].config(state="disabled", bg="#6b7280", cursor="arrow")
