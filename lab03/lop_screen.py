@@ -51,7 +51,7 @@ def create_form_entry(parent, row, col, label_text):
     return entry
 
 
-def open_lop_screen(root, on_logout_callback):
+def open_lop_screen(root, on_logout_callback, nav_callbacks=None):
     """Hiển thị màn hình quản lý lớp học."""
     for w in root.winfo_children():
         w.destroy()
@@ -163,17 +163,26 @@ def open_lop_screen(root, on_logout_callback):
             except Exception as e:
                 messagebox.showerror("Lỗi DB", str(e))
 
+    def goto_sv():
+        malop = e_malop.get().strip()
+        if not malop:
+            return messagebox.showwarning("Thiếu thông tin", "Vui lòng chọn một lớp từ danh sách.")
+
+        if malop and nav_callbacks and 'sv' in nav_callbacks:
+            root.after(10, lambda: nav_callbacks['sv'](malop))
+
+
     tree_lop.bind("<<TreeviewSelect>>", on_select_lop)
 
     # Rendering Buttons
     def render_btns(parent, cmds):
-        colors = {"Thêm": "#10b981", "Sửa": "#f59e0b", "Xóa": "#ef4444", "Làm mới": "#6b7280"}
+        colors = {"Thêm": "#10b981", "Sửa": "#f59e0b", "Xóa": "#ef4444", "Quản lý Sinh viên": "#3b82f6", "Làm mới": "#6b7280"}
         for txt, cmd in cmds:
             tk.Button(parent, text=txt, font=("Segoe UI", 10, "bold"),
                       bg=colors[txt], fg="white", activebackground="white", activeforeground="black",
                       relief="flat", cursor="hand2", padx=20, pady=8, command=cmd).pack(side="left", padx=5)
 
-    render_btns(btn_frame_lop, [("Thêm", add_lop), ("Sửa", update_lop), ("Xóa", delete_lop), ("Làm mới", clear_lop)])
+    render_btns(btn_frame_lop, [("Thêm", add_lop), ("Sửa", update_lop), ("Xóa", delete_lop), ("Quản lý Sinh viên", goto_sv), ("Làm mới", clear_lop)])
 
     # Khởi tạo data
     load_lop()

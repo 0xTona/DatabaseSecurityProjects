@@ -21,8 +21,15 @@ def main():
         root.deiconify()
 
     def show_main_app():
-        lop_screen.open_lop_screen(root, on_logout_callback=show_login)
+        lop_screen.open_lop_screen(root, show_login, nav_callbacks)
         root.deiconify()
+
+    def show_sv(selected_malop=None):
+        import sinhvien_screen
+        sinhvien_screen.open_sinhvien_screen(root, show_login, nav_callbacks, current_malop=selected_malop)
+        root.deiconify()
+
+    nav_callbacks = {'lop': show_main_app, 'sv': show_sv}        
 
     # Bắt đầu luồng ở login
     show_login()
