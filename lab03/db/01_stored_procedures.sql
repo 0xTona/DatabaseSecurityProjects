@@ -35,7 +35,11 @@ FROM NHANVIEN
 WHERE TENDN = @TENDN;
 END
 
--- quản lý lớp học
+-- =================================================================
+-- 1. QUẢN LÝ LỚP HỌC
+-- =================================================================
+
+-- 1. SP_SEL_LOP
 GO 
 CREATE OR ALTER PROCEDURE SP_SEL_LOP AS BEGIN
 SET NOCOUNT ON;
@@ -48,39 +52,127 @@ FROM LOP L
 ORDER BY L.MALOP;
 END
 
-GO 
-CREATE
-    OR ALTER PROCEDURE SP_INS_LOP @MALOP VARCHAR(20),
+GO
+-- 2. SP_INS_LOP
+CREATE OR ALTER PROCEDURE SP_INS_LOP
+    @MALOP VARCHAR(20),
     @TENLOP NVARCHAR(100),
-    @MANV VARCHAR(20) AS BEGIN
-SET NOCOUNT ON;
-INSERT INTO LOP (MALOP, TENLOP, MANV)
-VALUES (@MALOP, @TENLOP, @MANV);
-END
+    @MANV VARCHAR(20),
+    @MANV_LOGIN VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    -- Kiểm tra: Mã GVCN được gán có đúng là người đang đăng nhập không?
+    IF @MANV <> @MANV_LOGIN
+    BEGIN
+        THROW 50001, 'Unauthorized action: You can only assign yourself as the manager of a new class.', 1;
+    END
 
-GO 
-CREATE
-    OR ALTER PROCEDURE SP_UPD_LOP @MALOP VARCHAR(20),
-    @TENLOP NVARCHAR(100),
-    @MANV VARCHAR(20) AS BEGIN
-SET NOCOUNT ON;
-UPDATE LOP
-SET TENLOP = @TENLOP,
-    MANV = @MANV
-WHERE MALOP = @MALOP;
-END
-
-GO 
-CREATE
-    OR ALTER PROCEDURE SP_DEL_LOP @MALOP VARCHAR(20) AS BEGIN
-SET NOCOUNT ON;
-UPDATE SINHVIEN
-SET MALOP = NULL
-WHERE MALOP = @MALOP;
-DELETE FROM LOP
-WHERE MALOP = @MALOP;
+    BEGIN TRY
+        BEGIN TRAN;
+        INSERT INTO LOP (MALOP, TENLOP, MANV)
+        VALUES (@MALOP, @TENLOP, @MANV);
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRAN;
+        THROW;
+    END CATCH
 END
 GO
+
+-- 3. SP_UPD_LOP
+CREATE OR ALTER PROCEDURE SP_UPD_LOP
+    @MALOP VARCHAR(20),
+    @TENLOP NVARCHAR(100),
+    @MANV_LOGIN VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    IF NOT EXISTS (SELECT 1 FROM LOP WHERE MALOP = @MALOP AND MANV = @MANV_LOGIN)
+    BEGIN
+        THROW 50001, 'Unauthorized action: You do not manage this class.', 1;
+    END
+
+    BEGIN TRY
+        BEGIN TRAN;
+        UPDATE LOP
+        SET TENLOP = @TENLOP
+        WHERE MALOP = @MALOP;
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRAN;
+        THROW;
+    END CATCH
+END
+GO
+
+-- 4. SP_DEL_LOP
+CREATE OR ALTER PROCEDURE SP_DEL_LOP
+    @MALOP VARCHAR(20),
+    @MANV_LOGIN VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    IF NOT EXISTS (SELECT 1 FROM LOP WHERE MALOP = @MALOP AND MANV = @MANV_LOGIN)
+    BEGIN
+        THROW 50001, 'Unauthorized action: You do not manage this class.', 1;
+    END
+
+    BEGIN TRY
+        BEGIN TRAN;
+        -- Delete class. (Assuming no students attached, else FK error will occur safely)
+        DELETE FROM LOP WHERE MALOP = @MALOP;
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRAN;
+        THROW;
+    END CATCH
+END
+GO
+
+
+-- GO 
+-- CREATE
+--     OR ALTER PROCEDURE SP_INS_LOP @MALOP VARCHAR(20),
+--     @TENLOP NVARCHAR(100),
+--     @MANV VARCHAR(20) AS BEGIN
+-- SET NOCOUNT ON;
+-- INSERT INTO LOP (MALOP, TENLOP, MANV)
+-- VALUES (@MALOP, @TENLOP, @MANV);
+-- END
+
+-- GO 
+-- CREATE
+--     OR ALTER PROCEDURE SP_UPD_LOP @MALOP VARCHAR(20),
+--     @TENLOP NVARCHAR(100),
+--     @MANV VARCHAR(20) AS BEGIN
+-- SET NOCOUNT ON;
+-- UPDATE LOP
+-- SET TENLOP = @TENLOP,
+--     MANV = @MANV
+-- WHERE MALOP = @MALOP;
+-- END
+
+-- GO 
+-- CREATE
+--     OR ALTER PROCEDURE SP_DEL_LOP @MALOP VARCHAR(20) AS BEGIN
+-- SET NOCOUNT ON;
+-- UPDATE SINHVIEN
+-- SET MALOP = NULL
+-- WHERE MALOP = @MALOP;
+-- DELETE FROM LOP
+-- WHERE MALOP = @MALOP;
+-- END
+-- GO
 
 
 

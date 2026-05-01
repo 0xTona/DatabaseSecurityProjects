@@ -17,16 +17,16 @@ GO
 
 
 -- Lớp của Thầy An (NV01)
-EXEC SP_INS_LOP 'CNTT01', N'Công nghệ thông tin Khóa 1', 'NV01';
-EXEC SP_INS_LOP 'CNTT04', N'Công nghệ thông tin Khóa 4', 'NV01';
+EXEC SP_INS_LOP 'CNTT01', N'Công nghệ thông tin Khóa 1', 'NV01', 'NV01';
+EXEC SP_INS_LOP 'CNTT04', N'Công nghệ thông tin Khóa 4', 'NV01', 'NV01';
 
 -- Lớp của Cô Bình (NV02)
-EXEC SP_INS_LOP 'CNTT02', N'Công nghệ thông tin Khóa 2', 'NV02';
-EXEC SP_INS_LOP 'CNTT05', N'Công nghệ thông tin Khóa 5', 'NV02';
+EXEC SP_INS_LOP 'CNTT02', N'Công nghệ thông tin Khóa 2', 'NV02', 'NV02';
+EXEC SP_INS_LOP 'CNTT05', N'Công nghệ thông tin Khóa 5', 'NV02', 'NV02';
 
 -- Lớp của Thầy Cường (NV03)
-EXEC SP_INS_LOP 'CNTT03', N'Công nghệ thông tin Khóa 3', 'NV03';
-EXEC SP_INS_LOP 'CNTT06', N'Công nghệ thông tin Khóa 6', 'NV03';
+EXEC SP_INS_LOP 'CNTT03', N'Công nghệ thông tin Khóa 3', 'NV03', 'NV03';
+EXEC SP_INS_LOP 'CNTT06', N'Công nghệ thông tin Khóa 6', 'NV03', 'NV03';
 GO
 
 USE QLSVNhom;

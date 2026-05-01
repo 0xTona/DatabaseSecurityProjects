@@ -109,6 +109,8 @@ def open_lop_screen(root, on_logout_callback, nav_callbacks=None):
     btn_frame_lop = tk.Frame(content_frame, bg=BG)
     btn_frame_lop.pack(fill="x", pady=15)
 
+    btn_dict = {}
+
     def load_lop():
         for item in tree_lop.get_children():
             tree_lop.delete(item)
@@ -126,39 +128,77 @@ def open_lop_screen(root, on_logout_callback, nav_callbacks=None):
             e_malop.delete(0, 'end'); e_malop.insert(0, v[0])
             e_malop.config(state="readonly")  # Không cho sửa Khóa chính
             e_tenlop.delete(0, 'end'); e_tenlop.insert(0, v[1])
-            e_manv.delete(0, 'end'); e_manv.insert(0, v[2] if v[2] else "")
+            
+            e_manv.config(state="normal")
+            e_manv.delete(0, 'end')
+            e_manv.insert(0, v[2] if v[2] else "")
+            e_manv.config(state="disabled")
+            
+            is_owner = (str(v[2]) == str(session.current_user["MANV"]))
+            
+            if is_owner:
+                if "Sửa" in btn_dict: btn_dict["Sửa"].config(state="normal", bg="#f59e0b")
+                if "Xóa" in btn_dict: btn_dict["Xóa"].config(state="normal", bg="#ef4444")
+            else:
+                if "Sửa" in btn_dict: btn_dict["Sửa"].config(state="disabled", bg="#6b7280")
+                if "Xóa" in btn_dict: btn_dict["Xóa"].config(state="disabled", bg="#6b7280")
+                
+            if "Thêm" in btn_dict:
+                btn_dict["Thêm"].config(state="disabled", bg="#6b7280")
 
     def clear_lop():
         e_malop.config(state="normal")
-        e_malop.delete(0, 'end'); e_tenlop.delete(0, 'end'); e_manv.delete(0, 'end')
+        e_malop.delete(0, 'end'); e_tenlop.delete(0, 'end')
+        
+        e_manv.config(state="normal")
+        e_manv.delete(0, 'end')
+        e_manv.insert(0, session.current_user["MANV"])
+        e_manv.config(state="disabled")
+        
+        if "Sửa" in btn_dict:
+            btn_dict["Sửa"].config(state="disabled", bg="#6b7280")
+        if "Xóa" in btn_dict:
+            btn_dict["Xóa"].config(state="disabled", bg="#6b7280")
+        if "Thêm" in btn_dict:
+            btn_dict["Thêm"].config(state="normal", bg="#10b981")
+            
         load_lop()
 
     def add_lop():
-        ml, tl, mn = e_malop.get(), e_tenlop.get(), e_manv.get()
+        e_manv.config(state="normal")
+        mn = e_manv.get()
+        e_manv.config(state="disabled")
+        ml, tl = e_malop.get(), e_tenlop.get()
         if not (ml and tl and mn): return messagebox.showwarning("Thiếu", "Nhập đủ thông tin")
         try:
-            call_sp("SP_INS_LOP", {"MALOP": ml, "TENLOP": tl, "MANV": mn})
+            call_sp("SP_INS_LOP", {"MALOP": ml, "TENLOP": tl, "MANV": mn, "MANV_LOGIN": session.current_user["MANV"]})
             clear_lop()
             messagebox.showinfo("Thành công", "Đã thêm lớp.")
         except Exception as e:
             messagebox.showerror("Lỗi DB", str(e))
 
     def update_lop():
-        ml, tl, mn = e_malop.get(), e_tenlop.get(), e_manv.get()
+        e_manv.config(state="normal")
+        mn = e_manv.get()
+        e_manv.config(state="disabled")
+        ml, tl = e_malop.get(), e_tenlop.get()
         if not (ml and tl and mn): return messagebox.showwarning("Thiếu", "Nhập đủ thông tin")
         try:
-            call_sp("SP_UPD_LOP", {"MALOP": ml, "TENLOP": tl, "MANV": mn})
+            call_sp("SP_UPD_LOP", {"MALOP": ml, "TENLOP": tl, "MANV_LOGIN": session.current_user["MANV"]})
             clear_lop()
             messagebox.showinfo("Thành công", "Đã cập nhật lớp.")
         except Exception as e:
             messagebox.showerror("Lỗi DB", str(e))
 
     def delete_lop():
+        e_manv.config(state="normal")
+        mn = e_manv.get()
+        e_manv.config(state="disabled")
         ml = e_malop.get()
         if not ml: return
         if messagebox.askyesno("Xóa", f"Xóa lớp {ml}?"):
             try:
-                call_sp("SP_DEL_LOP", {"MALOP": ml})
+                call_sp("SP_DEL_LOP", {"MALOP": ml, "MANV_LOGIN": session.current_user["MANV"]})
                 clear_lop()
             except Exception as e:
                 messagebox.showerror("Lỗi DB", str(e))
@@ -178,13 +218,16 @@ def open_lop_screen(root, on_logout_callback, nav_callbacks=None):
 
     # Rendering Buttons
     def render_btns(parent, cmds):
+        nonlocal btn_dict
         colors = {"Thêm": "#10b981", "Sửa": "#f59e0b", "Xóa": "#ef4444", "Quản lý Sinh viên": "#3b82f6", "Làm mới": "#6b7280"}
         for txt, cmd in cmds:
-            tk.Button(parent, text=txt, font=("Segoe UI", 10, "bold"),
+            btn = tk.Button(parent, text=txt, font=("Segoe UI", 10, "bold"),
                       bg=colors[txt], fg="white", activebackground="white", activeforeground="black",
-                      relief="flat", cursor="hand2", padx=20, pady=8, command=cmd).pack(side="left", padx=5)
+                      relief="flat", cursor="hand2", padx=20, pady=8, command=cmd)
+            btn.pack(side="left", padx=5)
+            btn_dict[txt] = btn
 
     render_btns(btn_frame_lop, [("Thêm", add_lop), ("Sửa", update_lop), ("Xóa", delete_lop), ("Quản lý Sinh viên", goto_sv), ("Làm mới", clear_lop)])
 
     # Khởi tạo data
-    load_lop()
+    clear_lop()
