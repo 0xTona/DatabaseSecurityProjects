@@ -2,9 +2,11 @@
 sinhvien_screen.py — Quản lý Danh sách Sinh viên
 """
 
+from crypto_utils import rsa_encrypt
 import tkinter as tk
 from tkinter import ttk, messagebox
 from db_connection import call_sp
+from crypto_utils import hash_password_sha1, rsa_encrypt, rsa_decrypt, generate_deterministic_rsa
 import session
 
 # ── Colors ──────────────────────────────────────────────────────────────────
@@ -194,6 +196,7 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
         masv, hoten, ngaysinh = e_masv.get(), e_hoten.get(), e_ngaysinh.get()
         diachi, tendn = e_diachi.get(), e_tendn.get()
         matkhau = e_matkhau.get()
+        matkhau_hash = hash_password_sha1(matkhau)
         malop = current_malop
         
         if not (masv and hoten and ngaysinh and malop and tendn and matkhau):
@@ -208,7 +211,7 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
                 "DIACHI": diachi,
                 "MALOP": malop,
                 "TENDN": tendn,
-                "MATKHAU": matkhau,
+                "MATKHAU_HASH": matkhau_hash,
                 "MANV_LOGIN": manv_login
             })
             clear_sv()
@@ -313,19 +316,28 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
             if not mk:
                 return messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập mật khẩu giảng viên.")
             
+            private_key = generate_deterministic_rsa(mk, session.current_user["MANV"])
+            
             for item in tree_diem.get_children():
                 tree_diem.delete(item)
                 
             try:
                 rows = call_sp("SP_SEL_BANGDIEM", {
                     "MASV": masv,
-                    "MANV_LOGIN": session.current_user["MANV"],
-                    "MATKHAU_LOGIN": mk
+                    "MANV_LOGIN": session.current_user["MANV"]
                 })
+
                 for r in rows:
-                    tree_diem.insert("", "end", values=(r[1], r[2]))
+                    mahp = r[1]
+                    diem_encrypt = r[2]
+                    try:
+                        diem_decrypt = rsa_decrypt(private_key, diem_encrypt)
+                    except Exception:
+                        diem_decrypt = "Sai MK / Lỗi giải mã"
+                    tree_diem.insert("", "end", values=(mahp, diem_decrypt))
             except Exception as e:
                 messagebox.showerror("Lỗi DB", str(e))
+
 
         def on_select_diem(e):
             selected = tree_diem.selection()
@@ -356,14 +368,19 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
                 
             try:
                 diem_float = float(diem)
+                if diem_float < 0 or diem_float > 10:
+                    return messagebox.showerror("Lỗi", "Điểm thi phải từ 0 đến 10.")
             except ValueError:
                 return messagebox.showerror("Lỗi", "Điểm thi phải là số.")
                 
             try:
+                public_key = session.current_user["PUBKEY"]
+                diem_encrypt = rsa_encrypt(public_key, str(diem_float))
+                
                 call_sp("SP_INS_BANGDIEM", {
                     "MASV": masv,
                     "MAHP": mahp,
-                    "DIEMTHI": diem_float,
+                    "DIEMTHI_ENCRYPT": diem_encrypt,
                     "MANV_LOGIN": session.current_user["MANV"]
                 })
                 messagebox.showinfo("Thành công", "Đã lưu điểm.")
