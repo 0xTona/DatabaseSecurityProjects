@@ -203,7 +203,7 @@ CREATE OR ALTER PROCEDURE SP_INS_SINHVIEN
     @DIACHI NVARCHAR(200),
     @MALOP VARCHAR(20),
     @TENDN NVARCHAR(100),
-    @MATKHAU NVARCHAR(100),
+    @MATKHAU_HASH VARBINARY(MAX),
     @MANV_LOGIN VARCHAR(20)
 AS
 BEGIN
@@ -221,10 +221,8 @@ BEGIN
     BEGIN TRY
         BEGIN TRAN;
         
-        DECLARE @MK_HASH VARBINARY(MAX) = HASHBYTES('SHA2_512', @MATKHAU);
-        
         INSERT INTO SINHVIEN (MASV, HOTEN, NGAYSINH, DIACHI, MALOP, TENDN, MATKHAU)
-        VALUES (@MASV, @HOTEN, @NGAYSINH, @DIACHI, @MALOP, @TENDN, @MK_HASH);
+        VALUES (@MASV, @HOTEN, @NGAYSINH, @DIACHI, @MALOP, @TENDN, @MATKHAU_HASH);
         
         COMMIT TRAN;
     END TRY
@@ -337,7 +335,7 @@ GO
 CREATE OR ALTER PROCEDURE SP_INS_BANGDIEM
     @MASV VARCHAR(20),
     @MAHP VARCHAR(20),
-    @DIEMTHI FLOAT,
+    @DIEMTHI_ENCRYPT VARBINARY(MAX),
     @MANV_LOGIN VARCHAR(20)
 AS
 BEGIN
@@ -352,35 +350,19 @@ BEGIN
         THROW 50001, N'Từ chối truy cập: Bạn không quản lý lớp của sinh viên này.', 1;
     END
 
-    -- Lấy PUBKEY thực sự của Giảng viên từ bảng NHANVIEN
-    DECLARE @PUBKEY VARCHAR(20);
-    SELECT @PUBKEY = PUBKEY FROM NHANVIEN WHERE MANV = @MANV_LOGIN;
-
-    IF @PUBKEY IS NULL
-    BEGIN
-        THROW 50001, N'Lỗi hệ thống: Không tìm thấy Public Key của giảng viên này.', 1;
-    END
-
     BEGIN TRY
         BEGIN TRAN;
-        
-        -- Ép kiểu FLOAT -> VARCHAR(50) -> VARBINARY để mã hóa
-        DECLARE @DiemString VARCHAR(50) = CAST(@DIEMTHI AS VARCHAR(50));
-        DECLARE @EncryptedDiem VARBINARY(MAX);
-        
-        -- DÙNG @PUBKEY THAY VÌ @MANV_LOGIN
-        SET @EncryptedDiem = EncryptByAsymKey(AsymKey_ID(@PUBKEY), CAST(@DiemString AS VARBINARY(MAX)));
         
         IF EXISTS (SELECT 1 FROM BANGDIEM WHERE MASV = @MASV AND MAHP = @MAHP)
         BEGIN
             UPDATE BANGDIEM
-            SET DIEMTHI = @EncryptedDiem
+            SET DIEMTHI = @DIEMTHI_ENCRYPT
             WHERE MASV = @MASV AND MAHP = @MAHP;
         END
         ELSE
         BEGIN
             INSERT INTO BANGDIEM (MASV, MAHP, DIEMTHI)
-            VALUES (@MASV, @MAHP, @EncryptedDiem);
+            VALUES (@MASV, @MAHP, @DIEMTHI_ENCRYPT);
         END
         
         COMMIT TRAN;
@@ -395,31 +377,25 @@ GO
 
 CREATE OR ALTER PROCEDURE SP_SEL_BANGDIEM
     @MASV VARCHAR(20),
-    @MANV_LOGIN VARCHAR(20),
-    @MATKHAU_LOGIN NVARCHAR(100)
+    @MANV_LOGIN VARCHAR(20)
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Bước 1: Xác thực mật khẩu giảng viên VÀ lấy PUBKEY cùng lúc
-    DECLARE @MK_HASH VARBINARY(MAX) = HASHBYTES('SHA2_512', @MATKHAU_LOGIN);
-    DECLARE @PUBKEY VARCHAR(20);
-
-    SELECT @PUBKEY = PUBKEY 
-    FROM NHANVIEN 
-    WHERE MANV = @MANV_LOGIN AND MATKHAU = @MK_HASH;
-
-    IF @PUBKEY IS NULL
+    -- Kiểm tra quyền: Có phải sinh viên lớp mình quản lý không?
+    DECLARE @MALOP VARCHAR(20);
+    SELECT @MALOP = MALOP FROM SINHVIEN WHERE MASV = @MASV;
+    
+    IF NOT EXISTS (SELECT 1 FROM LOP WHERE MALOP = @MALOP AND MANV = @MANV_LOGIN)
     BEGIN
-        THROW 50001, N'Xác thực thất bại: Mật khẩu giảng viên không đúng hoặc lỗi Key.', 1;
+        THROW 50001, N'Từ chối truy cập: Bạn không quản lý lớp của sinh viên này.', 1;
     END
 
-    -- Bước 2: Lọc sinh viên theo lớp quản lý & Giải mã điểm bằng @PUBKEY
+    -- Lọc sinh viên theo lớp quản lý & Giải mã điểm bằng @PUBKEY
     SELECT 
         BD.MASV, 
         BD.MAHP, 
-        -- DÙNG @PUBKEY THAY VÌ @MANV_LOGIN
-        CAST(CAST(DecryptByAsymKey(AsymKey_ID(@PUBKEY), BD.DIEMTHI, @MATKHAU_LOGIN) AS VARCHAR(50)) AS FLOAT) AS DIEMTHI
+        BD.DIEMTHI
     FROM BANGDIEM BD
     INNER JOIN SINHVIEN SV ON BD.MASV = SV.MASV
     INNER JOIN LOP L ON SV.MALOP = L.MALOP
