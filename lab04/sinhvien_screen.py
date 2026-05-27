@@ -196,7 +196,7 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
         masv, hoten, ngaysinh = e_masv.get(), e_hoten.get(), e_ngaysinh.get()
         diachi, tendn = e_diachi.get(), e_tendn.get()
         matkhau = e_matkhau.get()
-        matkhau_hash = hash_password_sha1(matkhau)
+        matkhau_hash = bytearray.fromhex(hash_password_sha1(matkhau))
         malop = current_malop
         
         if not (masv and hoten and ngaysinh and malop and tendn and matkhau):
@@ -375,7 +375,7 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
                 
             try:
                 public_key = session.current_user["PUBKEY"]
-                diem_encrypt = rsa_encrypt(public_key, str(diem_float))
+                diem_encrypt = bytearray(rsa_encrypt(public_key, str(diem_float)))
                 
                 call_sp("SP_INS_BANGDIEM", {
                     "MASV": masv,

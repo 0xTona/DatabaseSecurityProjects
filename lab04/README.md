@@ -1,4 +1,4 @@
-# Hướng Dẫn Cài Đặt và Chạy Ứng Dụng - Quản Lý Sinh Viên (Lab 03)
+# Hướng Dẫn Cài Đặt và Chạy Ứng Dụng - Quản Lý Sinh Viên (Lab 04 - Mã hóa ở Client)
 
 Ứng dụng này sử dụng Python (`tkinter`) làm giao diện và kết nối với SQL Server qua thư viện `pyodbc`. Dưới đây là các bước chi tiết để thiết lập Database và chạy ứng dụng.
 
@@ -11,48 +11,61 @@
 ## 2. Thiết Lập Môi Trường Ảo (Virtual Environment)
 
 Khuyến nghị sử dụng môi trường ảo (virtual environment) để cài đặt các thư viện độc lập cho dự án.
-Mở terminal/command prompt tại thư mục gốc của dự án (`Database-Lab3`) và chạy:
+Mở terminal/command prompt tại thư mục gốc của dự án và chạy:
 
 ```bash
-cd lab03
+cd lab04
 
 python -m venv venv
-./venv/Scripts/activate
+# Windows:
+.\venv\Scripts\activate
 
 pip install -r requirements.txt
 ```
 
-## 3. Thiết Lập Database
+## 3. Cấu Hình Ứng Dụng
 
-Trước khi chạy code Python, bạn bắt buộc phải tạo Database và các Stored Procedure trong SQL Server (có thể dùng SSMS hoặc DataGrip). Vui lòng chạy các script theo đúng thứ tự sau:
-
-1. Chạy file `db/00_create_database.sql`để khởi tạo Database `QLSVNhom` và cấu trúc các bảng cơ bản.
-2. Mở thư mục `lab03/db/` và chạy lần lượt các script sau trên Database `QLSVNhom`:
-   - **`01_stored_procedures.sql`**: Tạo các Stored Procedures hỗ trợ mã hóa dữ liệu (RSA_2048, SHA2_512) và các tác vụ Create/Read/Update/Delete (CRUD).
-   - **`02_sample_data.sql`**: Xóa dữ liệu cũ (nếu có) và thêm các nhân viên (Giảng viên), lớp học và sinh viên mẫu để test.
-
-> **Tài khoản mẫu đã được tạo:**
->
-> - Tên đăng nhập: `nva`
-> - Mật khẩu: `abcd12`
-
-## 4. Cấu Hình Ứng Dụng
-
-Mở file `lab03p/config.py` và cập nhật lại thông tin đăng nhập SQL Server cho phù hợp với máy của bạn.
+Mở file `config.py` và cập nhật lại thông tin đăng nhập SQL Server cho phù hợp với máy của bạn.
 
 ```python
 DB_CONFIG = {
     "driver": "ODBC Driver 17 for SQL Server",
-    "server": "localhost",       # Đổi thành tên Server
+    "server": "localhost",       # Đổi thành tên Server của bạn
     "database": "QLSVNhom",
     "uid": "sa",                 # Tài khoản SQL Server
     "pwd": "yourpassword"        # Mật khẩu SQL Server
 }
 ```
 
+## 4. Thiết Lập Database & Nạp Dữ Liệu Mẫu
+
+Trước khi chạy code Python, bạn bắt buộc phải tạo Database và các Stored Procedure trong SQL Server (có thể dùng SSMS hoặc DataGrip). Vui lòng chạy các script theo đúng thứ tự sau:
+
+1. Mở file `db/00_create_database.sql` và chạy để khởi tạo Database `QLSVNhom` cùng cấu trúc các bảng cơ bản.
+2. Mở file `db/01_stored_procedures.sql` và chạy để tạo các Stored Procedures thực hiện mã hóa và các tác vụ CRUD. Đảm bảo chạy script này dưới context database `QLSVNhom` (ví dụ: bôi đen dòng `USE QLSVNhom;` và chạy cùng).
+3. Chạy script nạp dữ liệu mẫu (`seed_data.py`). Script này sẽ tự động mã hóa mật khẩu, tạo key RSA cho giảng viên, và thêm dữ liệu mẫu:
+
+```bash
+python seed_data.py
+```
+
+> **Các tài khoản mẫu đã được tạo:**
+>
+> **1. Quản trị viên (Admin):**
+> - Tên đăng nhập: `admin`
+> - Mật khẩu: `Admin123!`
+>
+> **2. Giảng viên:**
+> - Tên đăng nhập: `nva` (Nguyễn Văn An), `ttb` (Trần Thị Bình), `lhc` (Lê Hoàng Cường)
+> - Mật khẩu chung: `Abcd123!`
+>
+> **3. Sinh viên:**
+> - Tên đăng nhập: `sv01`, `sv02`,...
+> - Mật khẩu chung: `123456`
+
 ## 5. Chạy Ứng Dụng
 
-Sau khi đã kích hoạt môi trường ảo, hãy di chuyển vào thư mục ứng dụng và chạy file `main.py`:
+Sau khi đã thiết lập Database và kích hoạt môi trường ảo, hãy chạy file `main.py`:
 
 ```bash
 python main.py
@@ -61,22 +74,17 @@ python main.py
 ## 6. Hướng Dẫn Sử Dụng
 
 1. **Đăng nhập:**
-   - Nhập Tên Đăng Nhập: `nva`
-   - Mật khẩu: `abcd12`
+   - Sử dụng tài khoản Admin hoặc Giảng viên (như thông tin ở trên).
    - Nhấn "ĐĂNG NHẬP" hoặc phím `Enter`.
-2. **Quản lý Lớp Học:**
-   - Sau khi đăng nhập thành công, hệ thống sẽ mở màn hình quản lý lớp học.
-   - Nhấn vào một dòng để thông tin chi tiết tự động điền xuống form bên dưới.
-   - Sử dụng các nút **[Thêm]**, **[Sửa]**, **[Xóa]**, **[Làm mới]** để quản lý dữ liệu lớp học.
-   - Nhấn **[Đăng xuất]** ở góc phải phía trên để quay lại màn hình đăng nhập.
-3. **Quản lý Sinh viên (Điều hướng theo Lớp):**
-   - Sau khi đăng nhập, màn hình mặc định sẽ hiển thị danh sách các Lớp Học.
-   - Để xem danh sách sinh viên, bạn cần chọn một lớp trên bảng dữ liệu, sau đó nhấn nút **[Quản lý Sinh viên]**.
-   - Ứng dụng sẽ chuyển sang trang quản lý sinh viên của riêng lớp đó.
-   - Để quay lại trang Quản lý Lớp học, nhấn tab **[Quản lý Lớp học]**.
-   - Lưu ý bảo mật: Chỉ giảng viên chủ nhiệm của lớp mới có quyền sử dụng các nút **[Thêm]**, **[Sửa]**, **[Xóa]**, **[Quản lý Điểm]** đối với sinh viên trong lớp. Nếu không có quyền, các nút này sẽ bị khóa.
-4. **Quản lý Điểm (Mã hóa & Popup):**
-   - Tại trang Quản lý Sinh viên, hãy chọn một sinh viên trong bảng và nhấn nút **[Quản lý Điểm]**.
-   - Một cửa sổ (Popup) sẽ hiện ra, bạn có thể  điền mã học phần vào **[Mã HP]** và điểm vào **[Điểm thi]** và bấm **[Lưu Điểm]** mới hoặc cập nhật điểm cũ.
-   - Để  hiển thị điểm thi của sinh viên đã được chọn thì cần nhập mật khẩu và nhấn **[Xem Điểm]**. 
-   - Điểm số khi lưu sẽ tự động được hệ thống mã hóa bằng thuật toán RSA với Public key của giảng viên chủ nhiệm lớp trước khi lưu xuống cơ sở dữ liệu.
+2. **Quyền Admin:**
+   - Chỉ tài khoản Admin mới có quyền truy cập vào chức năng **Quản lý Nhân Viên**.
+   - Admin có thể thêm nhân viên mới (hệ thống sẽ tự động tạo cặp khóa RSA và mã hóa lương/mật khẩu ở client trước khi gửi xuống DB).
+3. **Quản lý Lớp Học:**
+   - Giảng viên có thể thêm, sửa, xóa các lớp học do mình làm chủ nhiệm.
+4. **Quản lý Sinh viên (Điều hướng theo Lớp):**
+   - Chọn một lớp học và nhấn **[Quản lý Sinh viên]** để xem danh sách sinh viên của lớp đó.
+   - Chỉ giảng viên chủ nhiệm mới có quyền thêm/sửa/xóa hoặc nhập điểm cho sinh viên lớp mình.
+5. **Quản lý Điểm (Mã hóa ở Client):**
+   - Tại trang Quản lý Sinh viên, chọn một sinh viên và nhấn **[Quản lý Điểm]**.
+   - Điểm số khi nhập vào sẽ được **mã hóa ở phía Client** bằng Public Key RSA của giảng viên chủ nhiệm trước khi lưu vào Database.
+   - Để xem được điểm thực tế, giảng viên phải nhập đúng mật khẩu đăng nhập của mình để giải mã Private Key và hiển thị điểm (Client-side decryption).

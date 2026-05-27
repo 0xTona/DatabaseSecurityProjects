@@ -1,4 +1,4 @@
-﻿USE QLSVNhom;
+USE QLSVNhom;
 
 -- quản lý đăng nhập
 GO 
@@ -400,5 +400,138 @@ BEGIN
     INNER JOIN SINHVIEN SV ON BD.MASV = SV.MASV
     INNER JOIN LOP L ON SV.MALOP = L.MALOP
     WHERE L.MANV = @MANV_LOGIN AND BD.MASV = @MASV;
+END
+GO
+
+-- =======================================================
+-- 4. QUẢN LÝ NHÂN VIÊN (LAB 4)
+-- =======================================================
+
+CREATE OR ALTER PROCEDURE SP_SEL_PUBLIC_ENCRYPT_NHANVIEN
+    @TENDN NVARCHAR(100),
+    @MATKHAU_HASH VARBINARY(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    IF NOT EXISTS (
+        SELECT 1
+        FROM NHANVIEN
+        WHERE TENDN = @TENDN AND MATKHAU = @MATKHAU_HASH
+    )
+    BEGIN
+        THROW 50001, 'Invalid username or password.', 1;
+    END
+
+    SELECT MANV,
+        HOTEN,
+        EMAIL,
+        LUONG,
+        PUBKEY,
+        ISADMIN
+    FROM NHANVIEN
+    WHERE TENDN = @TENDN;
+END
+GO
+
+CREATE OR ALTER PROCEDURE SP_SEL_NHANVIEN
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT MANV, HOTEN, EMAIL, TENDN, PUBKEY, ISADMIN
+    FROM NHANVIEN
+    ORDER BY MANV;
+END
+GO
+
+CREATE OR ALTER PROCEDURE SP_INS_PUBLIC_ENCRYPT_NHANVIEN
+    @MANV VARCHAR(20),
+    @HOTEN NVARCHAR(100),
+    @EMAIL VARCHAR(20),
+    @LUONG VARBINARY(MAX),
+    @TENDN NVARCHAR(100),
+    @MATKHAU_HASH VARBINARY(MAX),
+    @PUBKEY VARCHAR(MAX),
+    @MANV_LOGIN VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Only admin can add employees
+    IF NOT EXISTS (SELECT 1 FROM NHANVIEN WHERE MANV = @MANV_LOGIN AND ISADMIN = 1)
+    BEGIN
+        THROW 50001, 'Unauthorized: Only admin can add employees.', 1;
+    END
+
+    BEGIN TRY
+        BEGIN TRAN;
+        INSERT INTO NHANVIEN (MANV, HOTEN, EMAIL, LUONG, TENDN, MATKHAU, PUBKEY, ISADMIN)
+        VALUES (@MANV, @HOTEN, @EMAIL, @LUONG, @TENDN, @MATKHAU_HASH, @PUBKEY, 0);
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRAN;
+        THROW;
+    END CATCH
+END
+GO
+
+CREATE OR ALTER PROCEDURE SP_UPD_NHANVIEN
+    @MANV VARCHAR(20),
+    @HOTEN NVARCHAR(100),
+    @EMAIL VARCHAR(20),
+    @MANV_LOGIN VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Only admin can update employees
+    IF NOT EXISTS (SELECT 1 FROM NHANVIEN WHERE MANV = @MANV_LOGIN AND ISADMIN = 1)
+    BEGIN
+        THROW 50001, 'Unauthorized: Only admin can update employees.', 1;
+    END
+
+    BEGIN TRY
+        BEGIN TRAN;
+        UPDATE NHANVIEN
+        SET HOTEN = @HOTEN, EMAIL = @EMAIL
+        WHERE MANV = @MANV;
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRAN;
+        THROW;
+    END CATCH
+END
+GO
+
+CREATE OR ALTER PROCEDURE SP_DEL_NHANVIEN
+    @MANV VARCHAR(20),
+    @MANV_LOGIN VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Only admin can delete employees
+    IF NOT EXISTS (SELECT 1 FROM NHANVIEN WHERE MANV = @MANV_LOGIN AND ISADMIN = 1)
+    BEGIN
+        THROW 50001, 'Unauthorized: Only admin can delete employees.', 1;
+    END
+
+    -- Admin cannot delete themselves
+    IF @MANV = @MANV_LOGIN
+    BEGIN
+        THROW 50001, 'Unauthorized: Admin cannot delete their own account.', 1;
+    END
+
+    BEGIN TRY
+        BEGIN TRAN;
+        DELETE FROM NHANVIEN WHERE MANV = @MANV;
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRAN;
+        THROW;
+    END CATCH
 END
 GO

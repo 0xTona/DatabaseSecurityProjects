@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import font as tkfont
 from db_connection import call_sp
 import session
+from crypto_utils import hash_password_sha1, generate_deterministic_rsa, rsa_decrypt
 
 # ── Bảng màu ────────────────────────────────────────────────────────────────
 BG = "#0f1117"
@@ -179,11 +180,24 @@ def open_login_screen(root, on_success_callback):
         root.update()
 
         try:
-            result = call_sp("SP_SEL_PUBLIC_NHANVIEN", {"TENDN": tendn, "MK": mk})
+            hashed_mk = bytearray.fromhex(hash_password_sha1(mk))
+            result = call_sp("SP_SEL_PUBLIC_ENCRYPT_NHANVIEN", {"TENDN": tendn, "MATKHAU_HASH": hashed_mk})
             if result:
-                session.set_user(result[0])
+                # result[0] = (MANV, HOTEN, EMAIL, LUONG (encrypted), PUBKEY)
+                encrypted_luong = result[0][3]
+                private_key = generate_deterministic_rsa(mk, tendn)
+                
+                try:
+                    luong_decrypted = rsa_decrypt(private_key, encrypted_luong)
+                except Exception:
+                    luong_decrypted = "Lỗi giải mã"
+                
+                row = list(result[0])
+                row[3] = luong_decrypted
+                session.set_user(row)
+                
                 lbl_error.config(
-                    text=f"✓ Xin chào, {session.current_user['HOTEN']}!", fg=SUCCESS_FG
+                    text=f"✓ Xin chào, {session.current_user['HOTEN']}! Lương: {luong_decrypted}", fg=SUCCESS_FG
                 )
                 root.after(500, on_success_callback)
             else:

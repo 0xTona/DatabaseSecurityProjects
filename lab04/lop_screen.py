@@ -213,13 +213,17 @@ def open_lop_screen(root, on_logout_callback, nav_callbacks=None):
         if nav_callbacks and 'sv' in nav_callbacks:
             root.after(10, lambda: nav_callbacks['sv'](malop))
 
+    def goto_nv():
+        if nav_callbacks and 'nv' in nav_callbacks:
+            root.after(10, nav_callbacks['nv'])
+
 
     tree_lop.bind("<<TreeviewSelect>>", on_select_lop)
 
     # Rendering Buttons
     def render_btns(parent, cmds):
         nonlocal btn_dict
-        colors = {"Thêm": "#10b981", "Sửa": "#f59e0b", "Xóa": "#ef4444", "Quản lý Sinh viên": "#3b82f6", "Làm mới": "#6b7280"}
+        colors = {"Thêm": "#10b981", "Sửa": "#f59e0b", "Xóa": "#ef4444", "Quản lý Sinh viên": "#3b82f6", "Quản lý Nhân viên": "#8b5cf6", "Làm mới": "#6b7280"}
         for txt, cmd in cmds:
             btn = tk.Button(parent, text=txt, font=("Segoe UI", 10, "bold"),
                       bg=colors[txt], fg="white", activebackground="white", activeforeground="black",
@@ -227,7 +231,11 @@ def open_lop_screen(root, on_logout_callback, nav_callbacks=None):
             btn.pack(side="left", padx=5)
             btn_dict[txt] = btn
 
-    render_btns(btn_frame_lop, [("Thêm", add_lop), ("Sửa", update_lop), ("Xóa", delete_lop), ("Quản lý Sinh viên", goto_sv), ("Làm mới", clear_lop)])
+    btn_list = [("Thêm", add_lop), ("Sửa", update_lop), ("Xóa", delete_lop), ("Quản lý Sinh viên", goto_sv)]
+    if session.is_admin():
+        btn_list.append(("Quản lý Nhân viên", goto_nv))
+    btn_list.append(("Làm mới", clear_lop))
+    render_btns(btn_frame_lop, btn_list)
 
     # Khởi tạo data
     clear_lop()

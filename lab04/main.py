@@ -6,6 +6,7 @@ Xử lý logic luân chuyển giữa các màn hình.
 import tkinter as tk
 import login_screen
 import lop_screen
+import nhanvien_screen
 import session
 
 
@@ -29,7 +30,11 @@ def main():
         sinhvien_screen.open_sinhvien_screen(root, show_login, nav_callbacks, current_malop=selected_malop)
         root.deiconify()
 
-    nav_callbacks = {'lop': show_main_app, 'sv': show_sv}        
+    def show_nv():
+        nhanvien_screen.open_nhanvien_screen(root, show_login, nav_callbacks)
+        root.deiconify()
+
+    nav_callbacks = {'lop': show_main_app, 'sv': show_sv, 'nv': show_nv}        
 
     # Bắt đầu luồng ở login
     show_login()
