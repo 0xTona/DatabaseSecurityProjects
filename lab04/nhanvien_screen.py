@@ -126,6 +126,7 @@ def open_nhanvien_screen(root, on_logout_callback, nav_callbacks=None):
     btn_frame_nv.pack(fill="x", pady=15)
 
     btn_dict = {}
+    selected_pubkey = [None]  # Lưu PUBKEY của NV đang chọn
 
     def load_nv():
         for item in tree_nv.get_children():
@@ -152,13 +153,13 @@ def open_nhanvien_screen(root, on_logout_callback, nav_callbacks=None):
             e_tendn.config(state="normal")
             e_tendn.delete(0, 'end'); e_tendn.insert(0, v[3] if v[3] else "")
             
-            # Lương: cho phép nhập giá trị mới, nhưng cần MK hiện tại để mã hóa
             e_luongcb.config(state="normal")
             e_luongcb.delete(0, 'end')
             
-            # Mật khẩu: dùng để xác thực khi cập nhật lương (nhập MK hiện tại)
-            e_matkhau.config(state="normal")
+            selected_pubkey[0] = v[4] if v[4] else None
+            
             e_matkhau.delete(0, 'end')
+            e_matkhau.config(state="disabled")
 
             if "Thêm" in btn_dict: btn_dict["Thêm"].config(state="disabled", bg="#6b7280")
             if "Sửa" in btn_dict: btn_dict["Sửa"].config(state="normal", bg="#f59e0b")
@@ -171,6 +172,8 @@ def open_nhanvien_screen(root, on_logout_callback, nav_callbacks=None):
             e.config(state="normal")
         for e in [e_manv, e_hoten, e_email, e_luongcb, e_tendn, e_matkhau]:
             e.delete(0, 'end')
+        
+        selected_pubkey[0] = None
         
         if "Thêm" in btn_dict: btn_dict["Thêm"].config(state="normal", bg="#10b981")
         if "Sửa" in btn_dict: btn_dict["Sửa"].config(state="disabled", bg="#6b7280")
@@ -224,15 +227,14 @@ def open_nhanvien_screen(root, on_logout_callback, nav_callbacks=None):
         email = e_email.get()
         tendn = e_tendn.get()
         luong = e_luongcb.get()
-        mk = e_matkhau.get()
         
         if not manv: return
         
-        # Nếu nhập lương mới thì BẮT BUỘC nhập MK hiện tại để mã hóa lại
-        if luong and not mk:
-            return messagebox.showwarning("Thiếu mật khẩu", 
-                "Để cập nhật Lương, bạn phải nhập MẬT KHẨU HIỆN TẠI của nhân viên\n"
-                "(dùng để sinh lại khóa mã hóa, mật khẩu sẽ KHÔNG bị thay đổi).")
+        # Nếu nhập lương mới thì cần có PUBKEY đã lưu trong DB
+        if luong and not selected_pubkey[0]:
+            return messagebox.showwarning("Thiếu PUBKEY", 
+                "Nhân viên này chưa có PUBKEY trong hệ thống.\n"
+                "Không thể mã hóa lương.")
         
         try:
             params = {
@@ -244,10 +246,12 @@ def open_nhanvien_screen(root, on_logout_callback, nav_callbacks=None):
                 "LUONG": None
             }
             
-            # Mã hóa lại lương bằng key sinh từ MK hiện tại + MANV
-            if luong and mk:
-                private_key, public_key = generate_deterministic_rsa(mk, manv)
-                luong_encrypt = bytearray(rsa_encrypt(public_key, luong))
+            # Mã hóa lương bằng PUBKEY đã lưu trong DB
+            if luong and selected_pubkey[0]:
+                pubkey = selected_pubkey[0]
+                if isinstance(pubkey, str):
+                    pubkey = pubkey.encode('utf-8')
+                luong_encrypt = bytearray(rsa_encrypt(pubkey, luong))
                 params["LUONG"] = luong_encrypt
 
             call_sp("SP_UPD_NHANVIEN", params)
