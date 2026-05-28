@@ -149,9 +149,15 @@ def open_nhanvien_screen(root, on_logout_callback, nav_callbacks=None):
             e_hoten.delete(0, 'end'); e_hoten.insert(0, v[1] if v[1] else "")
             e_email.delete(0, 'end'); e_email.insert(0, v[2] if v[2] else "")
             
-            # Reset the confidential fields on selection
+            e_tendn.config(state="normal")
             e_tendn.delete(0, 'end'); e_tendn.insert(0, v[3] if v[3] else "")
+            
+            # Lương: cho phép nhập giá trị mới, nhưng cần MK hiện tại để mã hóa
+            e_luongcb.config(state="normal")
             e_luongcb.delete(0, 'end')
+            
+            # Mật khẩu: dùng để xác thực khi cập nhật lương (nhập MK hiện tại)
+            e_matkhau.config(state="normal")
             e_matkhau.delete(0, 'end')
 
             if "Thêm" in btn_dict: btn_dict["Thêm"].config(state="disabled", bg="#6b7280")
@@ -160,6 +166,9 @@ def open_nhanvien_screen(root, on_logout_callback, nav_callbacks=None):
 
     def clear_nv():
         e_manv.config(state="normal")
+        # Re-enable tất cả các trường (cho chế độ Thêm mới)
+        for e in [e_luongcb, e_tendn, e_matkhau]:
+            e.config(state="normal")
         for e in [e_manv, e_hoten, e_email, e_luongcb, e_tendn, e_matkhau]:
             e.delete(0, 'end')
         
@@ -213,16 +222,35 @@ def open_nhanvien_screen(root, on_logout_callback, nav_callbacks=None):
         
         hoten = e_hoten.get()
         email = e_email.get()
+        tendn = e_tendn.get()
+        luong = e_luongcb.get()
+        mk = e_matkhau.get()
         
         if not manv: return
         
+        # Nếu nhập lương mới thì BẮT BUỘC nhập MK hiện tại để mã hóa lại
+        if luong and not mk:
+            return messagebox.showwarning("Thiếu mật khẩu", 
+                "Để cập nhật Lương, bạn phải nhập MẬT KHẨU HIỆN TẠI của nhân viên\n"
+                "(dùng để sinh lại khóa mã hóa, mật khẩu sẽ KHÔNG bị thay đổi).")
+        
         try:
-            call_sp("SP_UPD_NHANVIEN", {
+            params = {
                 "MANV": manv,
                 "HOTEN": hoten,
                 "EMAIL": email,
-                "MANV_LOGIN": session.current_user["MANV"]
-            })
+                "MANV_LOGIN": session.current_user["MANV"],
+                "TENDN": tendn if tendn else None,
+                "LUONG": None
+            }
+            
+            # Mã hóa lại lương bằng key sinh từ MK hiện tại + MANV
+            if luong and mk:
+                private_key, public_key = generate_deterministic_rsa(mk, manv)
+                luong_encrypt = bytearray(rsa_encrypt(public_key, luong))
+                params["LUONG"] = luong_encrypt
+
+            call_sp("SP_UPD_NHANVIEN", params)
             clear_nv()
             messagebox.showinfo("Thành công", "Đã cập nhật nhân viên.")
         except Exception as e:
