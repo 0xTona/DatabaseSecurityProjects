@@ -181,8 +181,8 @@ def open_nhanvien_screen(root, on_logout_callback, nav_callbacks=None):
             return messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập đủ thông tin bắt buộc (MANV, HOTEN, LUONGCB, TENDN, MATKHAU).")
             
         try:
-            # 1. Sinh khóa RSA deterministically based on mk and tendn
-            private_key, public_key = generate_deterministic_rsa(mk, tendn)
+            # 1. Sinh khóa RSA deterministically based on mk and manv
+            private_key, public_key = generate_deterministic_rsa(mk, manv)
             
             # 2. Mã hóa lương bằng khóa public
             luong_encrypt = bytearray(rsa_encrypt(public_key, luong))

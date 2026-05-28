@@ -185,7 +185,8 @@ def open_login_screen(root, on_success_callback):
             if result:
                 # result[0] = (MANV, HOTEN, EMAIL, LUONG (encrypted), PUBKEY)
                 encrypted_luong = result[0][3]
-                private_key = generate_deterministic_rsa(mk, tendn)
+                manv = result[0][0]
+                private_key, _ = generate_deterministic_rsa(mk, manv)
                 
                 try:
                     luong_decrypted = rsa_decrypt(private_key, encrypted_luong)

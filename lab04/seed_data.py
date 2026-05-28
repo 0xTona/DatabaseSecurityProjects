@@ -21,7 +21,7 @@ def main():
     print("Đang thêm Admin...")
     admin_mk = 'Admin123!'
     admin_mk_hash = hash_password_sha1(admin_mk)
-    _, admin_pub = generate_deterministic_rsa(admin_mk, 'admin')
+    _, admin_pub = generate_deterministic_rsa(admin_mk, 'NV00')
     run_sql(f"""
         INSERT INTO NHANVIEN (MANV, HOTEN, EMAIL, LUONG, TENDN, MATKHAU, PUBKEY, ISADMIN)
         VALUES ('NV00', N'Quản trị viên', 'admin@edu.vn', NULL, 'admin', 0x{admin_mk_hash}, '{admin_pub.decode('utf-8')}', 1)
@@ -38,7 +38,7 @@ def main():
     pub_keys = {}
     
     for manv, hoten, email, luong, tendn, mk in nhanviens:
-        priv_key, pub_key = generate_deterministic_rsa(mk, tendn)
+        priv_key, pub_key = generate_deterministic_rsa(mk, manv)
         pub_keys[manv] = pub_key
         
         luong_encrypt = bytearray(rsa_encrypt(pub_key, luong))

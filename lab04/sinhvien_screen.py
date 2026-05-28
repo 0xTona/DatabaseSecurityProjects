@@ -2,7 +2,6 @@
 sinhvien_screen.py — Quản lý Danh sách Sinh viên
 """
 
-from crypto_utils import rsa_encrypt
 import tkinter as tk
 from tkinter import ttk, messagebox
 from db_connection import call_sp
@@ -316,7 +315,7 @@ def open_sinhvien_screen(root, on_logout_callback, nav_callbacks=None, current_m
             if not mk:
                 return messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập mật khẩu giảng viên.")
             
-            private_key = generate_deterministic_rsa(mk, session.current_user["MANV"])
+            private_key, _ = generate_deterministic_rsa(mk, session.current_user["MANV"])
             
             for item in tree_diem.get_children():
                 tree_diem.delete(item)
